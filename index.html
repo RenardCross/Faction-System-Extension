@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADventure Click Extension</title>
+    <link rel="stylesheet" href="extension.css">
+</head>
+<body>
+    <div id="extension-container">
+        <canvas id="click-canvas"></canvas>
+        <div id="minigame-overlay">
+            <div id="progress-bar-container" class="hidden">
+                <div id="progress-bar">
+                    <div id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0 / 0</div>
+            </div>
+            <div id="click-feedback" class="hidden"></div>
+        </div>
+    </div>
+    <script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
+    <script src="extension.js"></script>
+</body>
+</html>
+

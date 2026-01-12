@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faction System Panel</title>
+    <link rel="stylesheet" href="panel.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="panel-nav">
+        <button class="nav-btn active" data-page="overview">Overview</button>
+        <button class="nav-btn" data-page="actions">Actions</button>
+        <button class="nav-btn" data-page="messages">Messages</button>
+        <button class="nav-btn" data-page="tokens">Tokens</button>
+        <button class="nav-btn" data-page="inventory">Inventory</button>
+        <button class="nav-btn" data-page="status">Status</button>
+    </nav>
+
+    <!-- Loading State -->
+    <div id="loading" class="loading-container">
+        <div class="spinner"></div>
+        <p>Loading faction data...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="error" class="error-container" style="display:none;">
+        <p class="error-message">Unable to load data. Please try again.</p>
+        <button onclick="location.reload()">Refresh</button>
+    </div>
+
+    <!-- Content Container -->
+    <div id="content" class="content-container" style="display:none;">
+        
+        <!-- Overview Page -->
+        <div id="overview-page" class="page active">
+            <div class="user-header">
+                <img id="user-avatar" src="" alt="Avatar" class="user-avatar">
+                <h2 id="user-name">Username</h2>
+            </div>
+
+            <!-- Check-in Timer -->
+            <div class="timer-card">
+                <h3>Check-in Status</h3>
+                <div id="checkin-timer" class="timer-display">
+                    <span id="timer-text">Ready to check in!</span>
+                </div>
+            </div>
+
+            <!-- Stats Section -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Level</div>
+                    <div id="stat-level" class="stat-value">1</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Experience</div>
+                    <div id="stat-exp" class="stat-value">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Attack</div>
+                    <div id="stat-attack" class="stat-value">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Defense</div>
+                    <div id="stat-defense" class="stat-value">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Check-ins</div>
+                    <div id="stat-checkins" class="stat-value">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Prestige</div>
+                    <div id="stat-prestige" class="stat-value">0-0</div>
+                </div>
+            </div>
+
+            <!-- Faction Section -->
+            <div class="faction-card">
+                <h3>Faction</h3>
+                <div id="faction-info" class="faction-info">
+                    <img id="faction-image" src="" alt="Faction" class="faction-image" style="display:none;">
+                    <div class="faction-details">
+                        <div id="faction-loyalty" class="faction-label">No faction selected</div>
+                        <div id="faction-default" class="faction-sublabel" style="display:none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions Page -->
+        <div id="actions-page" class="page">
+            <h2>Actions</h2>
+            
+            <!-- Check-in Action -->
+            <div class="action-card">
+                <h3>Check In</h3>
+                <p class="action-description">Earn experience and rewards by checking in to your faction</p>
+                <button id="checkin-btn" class="action-btn" onclick="performCheckIn()">
+                    <span class="btn-icon">✓</span> Check In Now
+                </button>
+                <div id="checkin-status" class="action-status"></div>
+            </div>
+
+            <!-- Dungeon Action -->
+            <div class="action-card">
+                <h3>Join Dungeon</h3>
+                <p class="action-description">Join an active dungeon adventure with other viewers</p>
+                <button id="dungeon-btn" class="action-btn" onclick="joinDungeon()">
+                    <span class="btn-icon">⚔</span> Join Dungeon
+                </button>
+                <div id="dungeon-status" class="action-status"></div>
+            </div>
+        </div>
+
+        <!-- Messages Page -->
+        <div id="messages-page" class="page">
+            <h2>Activity Feed</h2>
+            <div id="messages-container" class="messages-container">
+                <div class="no-messages">No messages yet</div>
+            </div>
+        </div>
+
+        <!-- Tokens Page -->
+        <div id="tokens-page" class="page">
+            <h2>Tokens</h2>
+            <div id="tokens-grid" class="tokens-grid">
+                <div class="no-items">You don't have any tokens yet</div>
+            </div>
+        </div>
+
+        <!-- Inventory Page -->
+        <div id="inventory-page" class="page">
+            <h2>Inventory</h2>
+            <div id="inventory-list" class="inventory-list">
+                <div class="no-items">Your inventory is empty</div>
+            </div>
+        </div>
+
+        <!-- Status Page -->
+        <div id="status-page" class="page">
+            <h2>Status Effects</h2>
+            <div id="status-grid" class="status-grid">
+                <div class="no-items">No active status effects</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Twitch Extension Helper -->
+    <script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
+    <script src="panel.js"></script>
+</body>
+</html>
