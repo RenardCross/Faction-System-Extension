@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADventure Extension Configuration</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0e0e10;
+            color: #efeff1;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #9146ff;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            background: #18181b;
+            border: 1px solid #3a3a3d;
+            color: #efeff1;
+            border-radius: 4px;
+        }
+        button {
+            background: #9146ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #772ce8;
+        }
+        .info {
+            background: #18181b;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>ADventure Extension Configuration</h1>
+    <p>Configure your extension settings below.</p>
+    
+    <div class="form-group">
+        <label for="ebsUrl">Extension Backend Service (EBS) URL:</label>
+        <input type="text" id="ebsUrl" placeholder="https://your-ebs-url.com" />
+        <small style="color: #adadb8;">The URL where your EBS is hosted (must be HTTPS)</small>
+    </div>
+    
+    <button onclick="saveConfig()">Save Configuration</button>
+    
+    <div class="info">
+        <h3>Configuration Info</h3>
+        <p>This configuration is saved per broadcaster. The EBS URL should point to your Extension Backend Service that connects to your local Faction System application.</p>
+        <p><strong>Note:</strong> For local testing, use ngrok to expose your EBS via HTTPS.</p>
+    </div>
+
+    <script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
+    <script>
+        // Load existing configuration
+        window.Twitch.ext.onAuthorized((auth) => {
+            const config = window.Twitch.ext.configuration.broadcaster;
+            if (config && config.content) {
+                try {
+                    const settings = JSON.parse(config.content);
+                    if (settings.ebsUrl) {
+                        document.getElementById('ebsUrl').value = settings.ebsUrl;
+                    }
+                } catch (e) {
+                    console.error('Error parsing config:', e);
+                }
+            }
+        });
+
+        // Save configuration
+        function saveConfig() {
+            const ebsUrl = document.getElementById('ebsUrl').value;
+            
+            if (!ebsUrl) {
+                alert('Please enter an EBS URL');
+                return;
+            }
+
+            if (!ebsUrl.startsWith('https://')) {
+                alert('EBS URL must use HTTPS');
+                return;
+            }
+
+            const config = {
+                ebsUrl: ebsUrl
+            };
+
+            window.Twitch.ext.configuration.set('broadcaster', '1', JSON.stringify(config));
+            
+            alert('Configuration saved! The extension will use this EBS URL.');
+        }
+
+        // Listen for configuration changes
+        window.Twitch.ext.configuration.onChanged(() => {
+            const config = window.Twitch.ext.configuration.broadcaster;
+            if (config && config.content) {
+                try {
+                    const settings = JSON.parse(config.content);
+                    if (settings.ebsUrl) {
+                        document.getElementById('ebsUrl').value = settings.ebsUrl;
+                    }
+                } catch (e) {
+                    console.error('Error parsing config:', e);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+

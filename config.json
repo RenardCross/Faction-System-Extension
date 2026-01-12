@@ -1,0 +1,30 @@
+{
+  "name": "ADventure Click Extension",
+  "version": "1.0.0",
+  "description": "Interactive click-based overlay for ADventure mini-games",
+  "author": "Faction System",
+  "viewer_url": "https://your-ebs-url.com/viewer.html",
+  "viewer_urls": {
+    "video_overlay": "https://your-ebs-url.com/index.html"
+  },
+  "config_url": "https://your-ebs-url.com/config.html",
+  "live_config_url": "https://your-ebs-url.com/live_config.html",
+  "icon_urls": {
+    "100x100": "https://your-ebs-url.com/icon_100x100.png"
+  },
+  "asset_urls": {},
+  "installation_count": -42,
+  "can_install": true,
+  "panel_height": 0,
+  "whitelisted_config_urls": [],
+  "whitelisted_panel_urls": [],
+  "required_broadcaster_abilities": [],
+  "viewer_summary": "Click on the stream to participate in ADventure mini-games!",
+  "viewer_hashes": {
+    "video_overlay": "sha256-..."
+  },
+  "skylark": {
+    "feature_set": "v1"
+  }
+}
+
