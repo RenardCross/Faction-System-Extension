@@ -4,12 +4,29 @@ let userData = null;
 let timerInterval = null;
 let messagesInterval = null;
 let userMessages = [];
+let configurationReady = false;
+let initRetryCount = 0;
+const MAX_INIT_RETRIES = 5;
 
 // Initialize panel when Twitch extension loads
 window.Twitch.ext.onAuthorized((auth) => {
     twitchAuth = auth;
     console.log('Twitch authorized:', auth);
-    initializePanel();
+    // Wait a moment for configuration to be available, then initialize
+    setTimeout(() => initializePanel(), 500);
+});
+
+// Listen for configuration changes (async updates from broadcaster config)
+window.Twitch.ext.configuration.onChanged(() => {
+    console.log('Configuration changed!');
+    const config = window.Twitch.ext.configuration.broadcaster;
+    console.log('Updated broadcaster config:', config);
+
+    if (config && config.content && !configurationReady) {
+        configurationReady = true;
+        console.log('Configuration now available, reinitializing panel...');
+        initializePanel();
+    }
 });
 
 // Initialize the panel
