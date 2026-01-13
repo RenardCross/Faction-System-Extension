@@ -339,14 +339,17 @@ async function performCheckIn() {
         statusDiv.textContent = 'Checking in...';
         statusDiv.className = 'action-status info';
 
-        // Get EBS URL
+        // Get EBS URL from broadcaster config
         const config = window.Twitch.ext.configuration.broadcaster;
-        let ebsUrl = 'http://localhost:3000';
+        let ebsUrl = null;
         if (config && config.content) {
             try {
                 const settings = JSON.parse(config.content);
                 if (settings.ebsUrl) ebsUrl = settings.ebsUrl;
             } catch (e) { }
+        }
+        if (!ebsUrl) {
+            throw new Error('Extension not configured');
         }
 
         // Send check-in request
@@ -396,14 +399,17 @@ async function joinDungeon() {
         statusDiv.textContent = 'Joining dungeon...';
         statusDiv.className = 'action-status info';
 
-        // Get EBS URL
+        // Get EBS URL from broadcaster config
         const config = window.Twitch.ext.configuration.broadcaster;
-        let ebsUrl = 'http://localhost:3000';
+        let ebsUrl = null;
         if (config && config.content) {
             try {
                 const settings = JSON.parse(config.content);
                 if (settings.ebsUrl) ebsUrl = settings.ebsUrl;
             } catch (e) { }
+        }
+        if (!ebsUrl) {
+            throw new Error('Extension not configured');
         }
 
         // Send dungeon join request
@@ -489,12 +495,15 @@ function startMessagePolling() {
 async function fetchNewMessages() {
     try {
         const config = window.Twitch.ext.configuration.broadcaster;
-        let ebsUrl = 'http://localhost:3000';
+        let ebsUrl = null;
         if (config && config.content) {
             try {
                 const settings = JSON.parse(config.content);
                 if (settings.ebsUrl) ebsUrl = settings.ebsUrl;
             } catch (e) { }
+        }
+        if (!ebsUrl) {
+            return; // Silently fail if not configured
         }
 
         const response = await fetch(`${ebsUrl}/api/user/${twitchAuth.userId}/messages`, {
