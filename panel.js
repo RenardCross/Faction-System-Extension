@@ -77,7 +77,7 @@ function switchPage(pageName) {
     document.getElementById(`${pageName}-page`).classList.add('active');
 
     // Render the page content
-    switch(pageName) {
+    switch (pageName) {
         case 'overview':
             renderOverviewPage();
             break;
@@ -104,22 +104,32 @@ async function fetchUserData() {
     try {
         // Get EBS URL from broadcaster config or use default
         const config = window.Twitch.ext.configuration.broadcaster;
-        let ebsUrl = 'http://localhost:3000'; // Default for local testing
-        
+        let ebsUrl = null;
+
+        // Try to get from broadcaster config first
         if (config && config.content) {
             try {
                 const settings = JSON.parse(config.content);
                 if (settings.ebsUrl) {
                     ebsUrl = settings.ebsUrl;
+                    console.log('Using EBS URL from broadcaster config:', ebsUrl);
                 }
             } catch (e) {
                 console.warn('Could not parse broadcaster config');
             }
         }
 
+        // If no config, show message to user
+        if (!ebsUrl) {
+            console.error('No EBS URL configured!');
+            console.info('The broadcaster needs to configure the extension with the EBS URL.');
+            console.info('Open Extension Settings in the app and click "Start All Services" to get the tunnel URL.');
+            throw new Error('Extension not configured. Please contact the broadcaster to set up the EBS URL.');
+        }
+
         // Extract Twitch user ID from auth token
         const twitchUserId = twitchAuth.userId;
-        
+
         // Fetch user data from EBS
         const response = await fetch(`${ebsUrl}/api/user/${twitchUserId}/data`, {
             headers: {
@@ -133,7 +143,7 @@ async function fetchUserData() {
         }
 
         const data = await response.json();
-        
+
         if (data.success) {
             userData = data.data;
             console.log('User data loaded:', userData);
@@ -225,25 +235,25 @@ function updateCheckInTimer() {
     }
 
     const timerText = document.getElementById('timer-text');
-    
-    if (!userData || !userData.stats|| !userData.stats.lastCheckInTime) {
+
+    if (!userData || !userData.stats || !userData.stats.lastCheckInTime) {
         timerText.textContent = 'Ready to check in!';
         timerText.className = 'timer-ready';
         return;
     }
 
     const lastCheckIn = new Date(userData.stats.lastCheckInTime);
-    
+
     // Function to update the timer
     const updateTimer = () => {
         const now = new Date();
         const elapsed = now - lastCheckIn;
-        
+
         // Get cooldown from config or use default (5 minutes = 300000 ms)
         const cooldown = 5 * 60 * 1000; // 5 minutes default
-        
+
         const remaining = cooldown - elapsed;
-        
+
         if (remaining <= 0) {
             timerText.textContent = 'Ready to check in!';
             timerText.className = 'timer-ready';
@@ -258,7 +268,7 @@ function updateCheckInTimer() {
 
     // Update immediately
     updateTimer();
-    
+
     // Update every second
     timerInterval = setInterval(updateTimer, 1000);
 }
@@ -269,18 +279,18 @@ function renderActionsPage() {
 
     const checkinBtn = document.getElementById('checkin-btn');
     const dungeonBtn = document.getElementById('dungeon-btn');
-    
+
     // Check if user can check in (cooldown logic)
     const canCheckIn = canUserCheckIn();
     checkinBtn.disabled = !canCheckIn;
-    
+
     // For now, disable dungeon button (will be enabled when dungeon is active)
     dungeonBtn.disabled = true;
-    
+
     // Clear status messages
     document.getElementById('checkin-status').textContent = '';
     document.getElementById('dungeon-status').textContent = '';
-    
+
     if (!canCheckIn) {
         document.getElementById('checkin-status').textContent = 'You are on cooldown. Wait for the timer to expire.';
         document.getElementById('checkin-status').className = 'action-status info';
@@ -292,12 +302,12 @@ function canUserCheckIn() {
     if (!userData || !userData.stats || !userData.stats.lastCheckInTime) {
         return true; // First check-in
     }
-    
+
     const lastCheckIn = new Date(userData.stats.lastCheckInTime);
     const now = new Date();
     const elapsed = now - lastCheckIn;
     const cooldown = 5 * 60 * 1000; // 5 minutes
-    
+
     return elapsed >= cooldown;
 }
 
@@ -306,12 +316,12 @@ async function performCheckIn() {
     try {
         const statusDiv = document.getElementById('checkin-status');
         const btn = document.getElementById('checkin-btn');
-        
+
         // Disable button
         btn.disabled = true;
         statusDiv.textContent = 'Checking in...';
         statusDiv.className = 'action-status info';
-        
+
         // Get EBS URL
         const config = window.Twitch.ext.configuration.broadcaster;
         let ebsUrl = 'http://localhost:3000';
@@ -319,9 +329,9 @@ async function performCheckIn() {
             try {
                 const settings = JSON.parse(config.content);
                 if (settings.ebsUrl) ebsUrl = settings.ebsUrl;
-            } catch (e) {}
+            } catch (e) { }
         }
-        
+
         // Send check-in request
         const response = await fetch(`${ebsUrl}/api/user/${twitchAuth.userId}/checkin`, {
             method: 'POST',
@@ -330,17 +340,17 @@ async function performCheckIn() {
                 'Content-Type': 'application/json'
             }
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             statusDiv.textContent = data.message || 'Check-in successful!';
             statusDiv.className = 'action-status success';
-            
+
             // Refresh user data
             await fetchUserData();
             renderOverviewPage();
-            
+
             // Add message to feed
             addMessage('Check-in successful!', 'chat');
         } else {
@@ -348,7 +358,7 @@ async function performCheckIn() {
             statusDiv.className = 'action-status error';
             btn.disabled = false;
         }
-        
+
     } catch (error) {
         console.error('Check-in error:', error);
         const statusDiv = document.getElementById('checkin-status');
@@ -363,12 +373,12 @@ async function joinDungeon() {
     try {
         const statusDiv = document.getElementById('dungeon-status');
         const btn = document.getElementById('dungeon-btn');
-        
+
         // Disable button
         btn.disabled = true;
         statusDiv.textContent = 'Joining dungeon...';
         statusDiv.className = 'action-status info';
-        
+
         // Get EBS URL
         const config = window.Twitch.ext.configuration.broadcaster;
         let ebsUrl = 'http://localhost:3000';
@@ -376,9 +386,9 @@ async function joinDungeon() {
             try {
                 const settings = JSON.parse(config.content);
                 if (settings.ebsUrl) ebsUrl = settings.ebsUrl;
-            } catch (e) {}
+            } catch (e) { }
         }
-        
+
         // Send dungeon join request
         const response = await fetch(`${ebsUrl}/api/user/${twitchAuth.userId}/dungeon/join`, {
             method: 'POST',
@@ -387,13 +397,13 @@ async function joinDungeon() {
                 'Content-Type': 'application/json'
             }
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             statusDiv.textContent = data.message || 'Joined dungeon successfully!';
             statusDiv.className = 'action-status success';
-            
+
             // Add message to feed
             addMessage('Joined dungeon!', 'chat');
         } else {
@@ -401,7 +411,7 @@ async function joinDungeon() {
             statusDiv.className = 'action-status error';
             btn.disabled = false;
         }
-        
+
     } catch (error) {
         console.error('Dungeon join error:', error);
         const statusDiv = document.getElementById('dungeon-status');
@@ -414,12 +424,12 @@ async function joinDungeon() {
 // Render Messages Page
 function renderMessagesPage() {
     const container = document.getElementById('messages-container');
-    
+
     if (userMessages.length === 0) {
         container.innerHTML = '<div class="no-messages">No messages yet</div>';
         return;
     }
-    
+
     container.innerHTML = userMessages.map(msg => `
         <div class="message-item">
             <div class="message-timestamp">
@@ -438,12 +448,12 @@ function addMessage(content, type = 'chat') {
         type: type,
         timestamp: new Date().toISOString()
     });
-    
+
     // Keep only last 50 messages
     if (userMessages.length > 50) {
         userMessages = userMessages.slice(0, 50);
     }
-    
+
     // If on messages page, refresh it
     if (document.getElementById('messages-page').classList.contains('active')) {
         renderMessagesPage();
@@ -467,16 +477,16 @@ async function fetchNewMessages() {
             try {
                 const settings = JSON.parse(config.content);
                 if (settings.ebsUrl) ebsUrl = settings.ebsUrl;
-            } catch (e) {}
+            } catch (e) { }
         }
-        
+
         const response = await fetch(`${ebsUrl}/api/user/${twitchAuth.userId}/messages`, {
             headers: {
                 'Authorization': `Bearer ${twitchAuth.token}`,
                 'Content-Type': 'application/json'
             }
         });
-        
+
         if (response.ok) {
             const data = await response.json();
             if (data.success && data.messages && data.messages.length > 0) {
@@ -494,12 +504,12 @@ async function fetchNewMessages() {
 // Render Tokens Page
 function renderTokensPage() {
     const grid = document.getElementById('tokens-grid');
-    
+
     if (!userData || !userData.tokens || userData.tokens.length === 0) {
         grid.innerHTML = '<div class="no-items">You don\'t have any tokens yet</div>';
         return;
     }
-    
+
     grid.innerHTML = userData.tokens.map(token => `
         <div class="token-item">
             <img src="${token.imageBase64}" alt="${token.name}" class="token-image">
@@ -512,12 +522,12 @@ function renderTokensPage() {
 // Render Inventory Page
 function renderInventoryPage() {
     const list = document.getElementById('inventory-list');
-    
+
     if (!userData || !userData.inventory || userData.inventory.length === 0) {
         list.innerHTML = '<div class="no-items">Your inventory is empty</div>';
         return;
     }
-    
+
     list.innerHTML = userData.inventory.map(item => `
         <div class="inventory-item">
             <img src="${item.imageBase64}" alt="${item.name}" class="item-image">
@@ -536,12 +546,12 @@ function renderInventoryPage() {
 // Render Status Page
 function renderStatusPage() {
     const grid = document.getElementById('status-grid');
-    
+
     if (!userData || !userData.effects || userData.effects.length === 0) {
         grid.innerHTML = '<div class="no-items">No active status effects</div>';
         return;
     }
-    
+
     grid.innerHTML = userData.effects.map(effect => `
         <div class="status-item">
             <img src="${effect.imageBase64}" alt="${effect.name}" class="status-image">
@@ -554,12 +564,12 @@ function renderStatusPage() {
 async function autoRefresh() {
     try {
         await fetchUserData();
-        
+
         // Re-render current page
         const activePage = document.querySelector('.page.active');
         if (activePage) {
             const pageId = activePage.id.replace('-page', '');
-            switch(pageId) {
+            switch (pageId) {
                 case 'overview':
                     renderOverviewPage();
                     break;
