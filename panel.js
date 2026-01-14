@@ -139,8 +139,24 @@ function switchPage(pageName) {
 }
 
 // Fetch user data from EBS
+// Show Offline View
+function showOfflineView() {
+    const loading = document.getElementById('loading');
+    const content = document.getElementById('content');
+    const offlineView = document.getElementById('offline-view');
+
+    if (loading) loading.style.display = 'none';
+    if (content) content.style.display = 'none';
+    if (offlineView) offlineView.style.display = 'flex';
+}
+
+// Fetch user data from EBS
 async function fetchUserData() {
     try {
+        // Reset Views
+        const offlineView = document.getElementById('offline-view');
+        if (offlineView) offlineView.style.display = 'none';
+
         // Get EBS URL from broadcaster config or use default
         const config = window.Twitch.ext.configuration.broadcaster;
         let ebsUrl = null;
@@ -161,9 +177,7 @@ async function fetchUserData() {
         // If no config, show message to user
         if (!ebsUrl) {
             console.error('No EBS URL configured!');
-            console.info('The broadcaster needs to configure the extension with the EBS URL.');
-            console.info('Open Extension Settings in the app and click "Start All Services" to get the tunnel URL.');
-            throw new Error('Extension not configured. Please contact the broadcaster to set up the EBS URL.');
+            throw new Error('Extension not configured (No EBS URL).');
         }
 
         // Extract Twitch user ID from auth token
@@ -187,41 +201,60 @@ async function fetchUserData() {
             userData = data.data;
             isNewUser = false;
             console.log('User data loaded:', userData);
+
+            // Show content
+            const loading = document.getElementById('loading');
+            const content = document.getElementById('content');
+            if (loading) loading.style.display = 'none';
+            if (content) content.style.display = 'block';
+
         } else {
             throw new Error(data.error || 'Failed to load user data');
         }
 
     } catch (error) {
         console.error('Error fetching user data:', error);
-        // Set new user flag - they need to check in first
-        isNewUser = true;
-        userData = {
-            userName: null,
-            twitchAvatarUrl: null,
-            isDungeonActive: false,
-            prestigeImageBase64: null,
-            stats: {
-                level: 0,
-                experience: 0,
-                attack: 0,
-                defense: 0,
-                totalCheckIns: 0,
-                sessionCheckIns: 0,
-                prestigeRank: 0,
-                prestigeTier: 0,
-                clipsMade: 0,
-                lastCheckInTime: null
-            },
-            tokens: [],
-            inventory: [],
-            effects: [],
-            faction: {
-                currentLoyalty: null,
-                defaultFaction: null,
-                factionHistory: [],
-                factionImageBase64: null
-            }
-        };
+
+        // If 404 (User not found) -> Treat as New User
+        if (error.message.includes('404')) {
+            isNewUser = true;
+            userData = {
+                userName: null,
+                twitchAvatarUrl: null,
+                isDungeonActive: false,
+                prestigeImageBase64: null,
+                stats: {
+                    level: 0,
+                    experience: 0,
+                    attack: 0,
+                    defense: 0,
+                    totalCheckIns: 0,
+                    sessionCheckIns: 0,
+                    prestigeRank: 0,
+                    prestigeTier: 0,
+                    clipsMade: 0,
+                    lastCheckInTime: null
+                },
+                tokens: [],
+                inventory: [],
+                effects: [],
+                faction: {
+                    currentLoyalty: null,
+                    defaultFaction: null,
+                    factionHistory: [],
+                    factionImageBase64: null
+                }
+            };
+            // Render logic will handle displaying "New User" prompts
+            const loading = document.getElementById('loading');
+            const content = document.getElementById('content');
+            if (loading) loading.style.display = 'none';
+            if (content) content.style.display = 'block';
+            renderOverviewPage();
+        } else {
+            // Network Error or 500 -> System Offline
+            showOfflineView();
+        }
     }
 }
 
@@ -233,7 +266,8 @@ function renderOverviewPage() {
     const userAvatar = document.getElementById('user-avatar');
     const userName = document.getElementById('user-name');
     const statsSection = document.querySelector('.stats-grid');
-    const factionSection = document.querySelector('.faction-card'); // Fixed selector
+    // Support both new and old class names for backward compatibility
+    const factionSection = document.querySelector('.faction-card') || document.querySelector('.faction-section');
     const timerText = document.getElementById('timer-text');
 
     // Helper to safely set text content
