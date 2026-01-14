@@ -15,6 +15,27 @@ window.Twitch.ext.onAuthorized((auth) => {
     console.log('Twitch authorized:', auth);
     // Wait a moment for configuration to be available, then initialize
     setTimeout(() => initializePanel(), 500);
+
+    // Listen for PubSub broadcasts
+    window.Twitch.ext.listen('broadcast', (target, contentType, message) => {
+        try {
+            console.log('Received broadcast:', message);
+            const data = JSON.parse(message);
+
+            if (data.type === 'dungeonStatus') {
+                console.log('Dungeon status update:', data.active);
+                if (userData) {
+                    userData.isDungeonActive = data.active;
+                    // Refresh actions page if active
+                    if (document.getElementById('actions-page').classList.contains('active')) {
+                        renderActionsPage();
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('Error parsing broadcast:', e);
+        }
+    });
 });
 
 // Listen for configuration changes (async updates from broadcaster config)
@@ -177,6 +198,8 @@ async function fetchUserData() {
         userData = {
             userName: null,
             twitchAvatarUrl: null,
+            isDungeonActive: false,
+            prestigeImageBase64: null,
             stats: {
                 level: 0,
                 experience: 0,
@@ -265,7 +288,17 @@ function renderOverviewPage() {
     document.getElementById('stat-attack').textContent = userData.stats.attack;
     document.getElementById('stat-defense').textContent = userData.stats.defense;
     document.getElementById('stat-checkins').textContent = userData.stats.totalCheckIns;
-    document.getElementById('stat-prestige').textContent = `${userData.stats.prestigeRank}-${userData.stats.prestigeTier}`;
+    document.getElementById('stat-prestige-rank').textContent = userData.stats.prestigeRank;
+    document.getElementById('stat-prestige-tier').textContent = userData.stats.prestigeTier;
+
+    // Set prestige image
+    const prestigeImage = document.getElementById('prestige-image');
+    if (userData.prestigeImageBase64) {
+        prestigeImage.src = `data:image/png;base64,${userData.prestigeImageBase64}`;
+        prestigeImage.style.display = 'block';
+    } else {
+        prestigeImage.style.display = 'none';
+    }
 
     // Set faction info
     const factionImage = document.getElementById('faction-image');
@@ -305,28 +338,55 @@ function updateCheckInTimer() {
 
     const timerText = document.getElementById('timer-text');
 
-    if (!userData || !userData.stats || !userData.stats.lastCheckInTime) {
+    if (!userData || !userData.stats) {
         timerText.textContent = 'Ready to check in!';
         timerText.className = 'timer-ready';
         return;
     }
 
-    const lastCheckIn = new Date(userData.stats.lastCheckInTime);
+    let targetTime;
+    if (userData.stats.nextCheckInTime) {
+        // Use server calculated time (accounts for tokens/modifiers)
+        targetTime = new Date(userData.stats.nextCheckInTime).getTime();
+    } else if (userData.stats.lastCheckInTime) {
+        // Fallback to local 5 min calc
+        targetTime = new Date(userData.stats.lastCheckInTime).getTime() + (5 * 60 * 1000);
+    } else {
+        // Never checked in
+        targetTime = 0;
+    }
 
     // Function to update the timer
     const updateTimer = () => {
-        const now = new Date();
-        const elapsed = now - lastCheckIn;
-
-        // Get cooldown from config or use default (5 minutes = 300000 ms)
-        const cooldown = 5 * 60 * 1000; // 5 minutes default
-
-        const remaining = cooldown - elapsed;
+        const now = new Date().getTime();
+        const remaining = targetTime - now;
 
         if (remaining <= 0) {
-            timerText.textContent = 'Ready to check in!';
-            timerText.className = 'timer-ready';
+            // Timer finished
             clearInterval(timerInterval);
+
+            // If server says we can't check in, but timer is up, it might be a block (Dungeon) or we need a refresh
+            if (userData.canCheckIn === false && userData.isDungeonActive) {
+                // Blocked by dungeon
+                timerText.textContent = 'Dungeon Active';
+                timerText.className = 'timer-cooldown';
+                return;
+            }
+
+            if (userData.canCheckIn === false && remaining > -10000) {
+                // Timer just finished (within 10s), refresh to get new status
+                // But don't loop if it stays false
+                console.log('Timer finished, refreshing status...');
+                fetchUserData().then(() => renderOverviewPage());
+                timerText.textContent = 'Checking status...';
+            } else if (userData.canCheckIn) {
+                timerText.textContent = 'Ready to check in!';
+                timerText.className = 'timer-ready';
+            } else {
+                // Blocked for other reasons or still fetching
+                timerText.textContent = 'Ready to check in!';
+                timerText.className = 'timer-ready';
+            }
         } else {
             const minutes = Math.floor(remaining / 60000);
             const seconds = Math.floor((remaining % 60000) / 1000);
@@ -349,35 +409,43 @@ function renderActionsPage() {
     const checkinBtn = document.getElementById('checkin-btn');
     const dungeonBtn = document.getElementById('dungeon-btn');
 
-    // Check if user can check in (cooldown logic)
-    const canCheckIn = canUserCheckIn();
+    // Check if user can check in (server flag)
+    // We trust the server 'canCheckIn' flag more than local timer now
+    // But if timer is running, canCheckIn will be false.
+    // If timer is done, canCheckIn should be true (unless blocked).
+    const canCheckIn = userData.canCheckIn;
+
     checkinBtn.disabled = !canCheckIn;
 
-    // For now, disable dungeon button (will be enabled when dungeon is active)
-    dungeonBtn.disabled = true;
+    // Enable dungeon button if dungeon is active
+    dungeonBtn.disabled = !userData.isDungeonActive;
+
+    // Update button text/style based on active state
+    if (!userData.isDungeonActive) {
+        document.getElementById('dungeon-status').textContent = 'No active dungeon';
+        document.getElementById('dungeon-status').className = 'action-status';
+    } else {
+        document.getElementById('dungeon-status').textContent = 'Dungeon is open!';
+        document.getElementById('dungeon-status').className = 'action-status success';
+    }
 
     // Clear status messages
     document.getElementById('checkin-status').textContent = '';
     document.getElementById('dungeon-status').textContent = '';
 
     if (!canCheckIn) {
-        document.getElementById('checkin-status').textContent = 'You are on cooldown. Wait for the timer to expire.';
+        if (userData.isDungeonActive) {
+            document.getElementById('checkin-status').textContent = 'Check-ins disabled during dungeon';
+        } else if (userData.stats.nextCheckInTime && new Date(userData.stats.nextCheckInTime) > new Date()) {
+            document.getElementById('checkin-status').textContent = 'Cooldown active';
+        }
         document.getElementById('checkin-status').className = 'action-status info';
     }
 }
 
 // Check if user can check in
 function canUserCheckIn() {
-    if (!userData || !userData.stats || !userData.stats.lastCheckInTime) {
-        return true; // First check-in
-    }
-
-    const lastCheckIn = new Date(userData.stats.lastCheckInTime);
-    const now = new Date();
-    const elapsed = now - lastCheckIn;
-    const cooldown = 5 * 60 * 1000; // 5 minutes
-
-    return elapsed >= cooldown;
+    return userData ? userData.canCheckIn : false;
 }
 
 // Perform Check-in

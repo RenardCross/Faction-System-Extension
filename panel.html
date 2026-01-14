@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Faction System Panel</title>
     <link rel="stylesheet" href="panel.css">
 </head>
+
 <body>
     <!-- Navigation -->
     <nav class="panel-nav">
@@ -31,11 +33,14 @@
 
     <!-- Content Container -->
     <div id="content" class="content-container" style="display:none;">
-        
+
         <!-- Overview Page -->
         <div id="overview-page" class="page active">
             <div class="user-header">
-                <img id="user-avatar" src="" alt="Avatar" class="user-avatar">
+                <div class="avatar-container">
+                    <img id="user-avatar" src="" alt="Avatar" class="user-avatar">
+                    <img id="prestige-image" src="" alt="Prestige" class="prestige-icon" style="display:none;">
+                </div>
                 <h2 id="user-name">Username</h2>
             </div>
 
@@ -70,8 +75,12 @@
                     <div id="stat-checkins" class="stat-value">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Prestige</div>
-                    <div id="stat-prestige" class="stat-value">0-0</div>
+                    <div class="stat-label">Prestige Rank</div>
+                    <div id="stat-prestige-rank" class="stat-value">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Prestige Tier</div>
+                    <div id="stat-prestige-tier" class="stat-value">0</div>
                 </div>
             </div>
 
@@ -91,7 +100,7 @@
         <!-- Actions Page -->
         <div id="actions-page" class="page">
             <h2>Actions</h2>
-            
+
             <!-- Check-in Action -->
             <div class="action-card">
                 <h3>Check In</h3>
@@ -151,4 +160,5 @@
     <script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
     <script src="panel.js"></script>
 </body>
+
 </html>
