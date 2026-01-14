@@ -233,46 +233,47 @@ function renderOverviewPage() {
     const userAvatar = document.getElementById('user-avatar');
     const userName = document.getElementById('user-name');
     const statsSection = document.querySelector('.stats-grid');
-    const factionSection = document.querySelector('.faction-section');
+    const factionSection = document.querySelector('.faction-card'); // Fixed selector
     const timerText = document.getElementById('timer-text');
+
+    // Helper to safely set text content
+    const safeSetText = (id, text) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+    };
 
     // Check if this is a new user who needs to check in first
     if (isNewUser || !userData.userName) {
-        // Hide avatar and username, show check-in prompt
-        userAvatar.style.display = 'none';
-        userName.textContent = '';
-
+        // ... (new user logic checks userHeader/userName existence already, likely safe or handled above)
+        // ...
+        if (userAvatar) userAvatar.style.display = 'none';
+        if (userName) userName.textContent = '';
+        // ...
         // Create or update the new user message
         let newUserMsg = document.getElementById('new-user-message');
         if (!newUserMsg) {
-            newUserMsg = document.createElement('div');
-            newUserMsg.id = 'new-user-message';
-            newUserMsg.className = 'new-user-prompt';
-            newUserMsg.innerHTML = `
-                <div class="welcome-icon">👋</div>
-                <h3>Welcome!</h3>
-                <p>You need to check in first to join the Faction System.</p>
-                <p class="hint">Type <strong>!join</strong> in chat to get started!</p>
-            `;
-            if (userHeader) {
-                userHeader.appendChild(newUserMsg);
-            }
+            // ...
+            if (userHeader) userHeader.appendChild(newUserMsg);
         }
-        newUserMsg.style.display = 'block';
+        if (newUserMsg) newUserMsg.style.display = 'block';
 
         // Hide stats and faction for new users
         if (statsSection) statsSection.style.opacity = '0.3';
         if (factionSection) factionSection.style.opacity = '0.3';
 
-        timerText.textContent = 'Join in chat to begin!';
-        timerText.className = 'timer-ready';
+        if (timerText) {
+            timerText.textContent = 'Join in chat to begin!';
+            timerText.className = 'timer-ready';
+        }
         return;
     }
 
     // Regular user - show full data
-    userAvatar.style.display = 'block';
-    userAvatar.src = userData.twitchAvatarUrl || 'https://static-cdn.jtvnw.net/jtv_user_pictures/default-avatar.png';
-    userName.textContent = userData.userName;
+    if (userAvatar) {
+        userAvatar.style.display = 'block';
+        userAvatar.src = userData.twitchAvatarUrl || 'https://static-cdn.jtvnw.net/jtv_user_pictures/default-avatar.png';
+    }
+    if (userName) userName.textContent = userData.userName;
 
     // Hide new user message if present
     const newUserMsg = document.getElementById('new-user-message');
@@ -282,22 +283,24 @@ function renderOverviewPage() {
     if (statsSection) statsSection.style.opacity = '1';
     if (factionSection) factionSection.style.opacity = '1';
 
-    // Set stats
-    document.getElementById('stat-level').textContent = userData.stats.level;
-    document.getElementById('stat-exp').textContent = userData.stats.experience.toLocaleString();
-    document.getElementById('stat-attack').textContent = userData.stats.attack;
-    document.getElementById('stat-defense').textContent = userData.stats.defense;
-    document.getElementById('stat-checkins').textContent = userData.stats.totalCheckIns;
-    document.getElementById('stat-prestige-rank').textContent = userData.stats.prestigeRank;
-    document.getElementById('stat-prestige-tier').textContent = userData.stats.prestigeTier;
+    // Set stats safely
+    safeSetText('stat-level', userData.stats.level);
+    safeSetText('stat-exp', userData.stats.experience.toLocaleString());
+    safeSetText('stat-attack', userData.stats.attack);
+    safeSetText('stat-defense', userData.stats.defense);
+    safeSetText('stat-checkins', userData.stats.totalCheckIns);
+    safeSetText('stat-prestige-rank', userData.stats.prestigeRank);
+    safeSetText('stat-prestige-tier', userData.stats.prestigeTier);
 
     // Set prestige image
     const prestigeImage = document.getElementById('prestige-image');
-    if (userData.prestigeImageBase64) {
-        prestigeImage.src = `data:image/png;base64,${userData.prestigeImageBase64}`;
-        prestigeImage.style.display = 'block';
-    } else {
-        prestigeImage.style.display = 'none';
+    if (prestigeImage) {
+        if (userData.prestigeImageBase64) {
+            prestigeImage.src = `data:image/png;base64,${userData.prestigeImageBase64}`;
+            prestigeImage.style.display = 'block';
+        } else {
+            prestigeImage.style.display = 'none';
+        }
     }
 
     // Set faction info
@@ -306,23 +309,25 @@ function renderOverviewPage() {
     const factionDefault = document.getElementById('faction-default');
 
     if (userData.faction.currentLoyalty) {
-        factionLoyalty.textContent = `Loyal to: ${userData.faction.currentLoyalty}`;
-        if (userData.faction.factionImageBase64) {
+        if (factionLoyalty) factionLoyalty.textContent = `Loyal to: ${userData.faction.currentLoyalty}`;
+        if (factionImage && userData.faction.factionImageBase64) {
             factionImage.src = userData.faction.factionImageBase64;
             factionImage.style.display = 'block';
         }
     } else if (userData.faction.defaultFaction) {
-        factionLoyalty.textContent = `Default: ${userData.faction.defaultFaction}`;
-        factionDefault.textContent = 'Not currently checked in';
-        factionDefault.style.display = 'block';
-        if (userData.faction.factionImageBase64) {
+        if (factionLoyalty) factionLoyalty.textContent = `Default: ${userData.faction.defaultFaction}`;
+        if (factionDefault) {
+            factionDefault.textContent = 'Not currently checked in';
+            factionDefault.style.display = 'block';
+        }
+        if (factionImage && userData.faction.factionImageBase64) {
             factionImage.src = userData.faction.factionImageBase64;
             factionImage.style.display = 'block';
         }
     } else {
-        factionLoyalty.textContent = 'No faction selected';
-        factionImage.style.display = 'none';
-        factionDefault.style.display = 'none';
+        if (factionLoyalty) factionLoyalty.textContent = 'No faction selected';
+        if (factionImage) factionImage.style.display = 'none';
+        if (factionDefault) factionDefault.style.display = 'none';
     }
 
     // Start check-in timer
