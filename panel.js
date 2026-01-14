@@ -164,6 +164,7 @@ async function fetchUserData() {
 
         if (data.success) {
             userData = data.data;
+            isNewUser = false;
             console.log('User data loaded:', userData);
         } else {
             throw new Error(data.error || 'Failed to load user data');
