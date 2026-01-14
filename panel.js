@@ -7,6 +7,7 @@ let userMessages = [];
 let configurationReady = false;
 let initRetryCount = 0;
 const MAX_INIT_RETRIES = 5;
+let isNewUser = false; // Track if user needs to check in first
 
 // Initialize panel when Twitch extension loads
 window.Twitch.ext.onAuthorized((auth) => {
@@ -170,12 +171,13 @@ async function fetchUserData() {
 
     } catch (error) {
         console.error('Error fetching user data:', error);
-        // Set default/empty data for new users
+        // Set new user flag - they need to check in first
+        isNewUser = true;
         userData = {
-            userName: twitchAuth.userId,
-            twitchAvatarUrl: `https://static-cdn.jtvnw.net/jtv_user_pictures/default-avatar.png`,
+            userName: null,
+            twitchAvatarUrl: null,
             stats: {
-                level: 1,
+                level: 0,
                 experience: 0,
                 attack: 0,
                 defense: 0,
@@ -203,9 +205,56 @@ async function fetchUserData() {
 function renderOverviewPage() {
     if (!userData) return;
 
-    // Set user header
-    document.getElementById('user-avatar').src = userData.twitchAvatarUrl;
-    document.getElementById('user-name').textContent = userData.userName;
+    const userHeader = document.getElementById('user-header');
+    const userAvatar = document.getElementById('user-avatar');
+    const userName = document.getElementById('user-name');
+    const statsSection = document.querySelector('.stats-grid');
+    const factionSection = document.querySelector('.faction-section');
+    const timerText = document.getElementById('timer-text');
+
+    // Check if this is a new user who needs to check in first
+    if (isNewUser || !userData.userName) {
+        // Hide avatar and username, show check-in prompt
+        userAvatar.style.display = 'none';
+        userName.textContent = '';
+
+        // Create or update the new user message
+        let newUserMsg = document.getElementById('new-user-message');
+        if (!newUserMsg) {
+            newUserMsg = document.createElement('div');
+            newUserMsg.id = 'new-user-message';
+            newUserMsg.className = 'new-user-prompt';
+            newUserMsg.innerHTML = `
+                <div class="welcome-icon">👋</div>
+                <h3>Welcome!</h3>
+                <p>You need to check in first to join the Faction System.</p>
+                <p class="hint">Type <strong>!join</strong> in chat to get started!</p>
+            `;
+            userHeader.appendChild(newUserMsg);
+        }
+        newUserMsg.style.display = 'block';
+
+        // Hide stats and faction for new users
+        if (statsSection) statsSection.style.opacity = '0.3';
+        if (factionSection) factionSection.style.opacity = '0.3';
+
+        timerText.textContent = 'Join in chat to begin!';
+        timerText.className = 'timer-ready';
+        return;
+    }
+
+    // Regular user - show full data
+    userAvatar.style.display = 'block';
+    userAvatar.src = userData.twitchAvatarUrl || 'https://static-cdn.jtvnw.net/jtv_user_pictures/default-avatar.png';
+    userName.textContent = userData.userName;
+
+    // Hide new user message if present
+    const newUserMsg = document.getElementById('new-user-message');
+    if (newUserMsg) newUserMsg.style.display = 'none';
+
+    // Show stats and faction sections
+    if (statsSection) statsSection.style.opacity = '1';
+    if (factionSection) factionSection.style.opacity = '1';
 
     // Set stats
     document.getElementById('stat-level').textContent = userData.stats.level;

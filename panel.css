@@ -71,7 +71,9 @@ body {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .loading-container p {
@@ -133,6 +135,67 @@ body {
     font-weight: 700;
 }
 
+/* New User Prompt */
+.new-user-prompt {
+    text-align: center;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(145, 70, 255, 0.1) 0%, rgba(119, 44, 232, 0.1) 100%);
+    border-radius: 8px;
+    border: 1px solid rgba(145, 70, 255, 0.3);
+    margin-top: 8px;
+}
+
+.new-user-prompt .welcome-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    animation: wave 1.5s ease-in-out infinite;
+}
+
+@keyframes wave {
+
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    25% {
+        transform: rotate(20deg);
+    }
+
+    50% {
+        transform: rotate(0deg);
+    }
+
+    75% {
+        transform: rotate(-20deg);
+    }
+}
+
+.new-user-prompt h3 {
+    font-size: 18px;
+    color: #9146ff;
+    margin-bottom: 8px;
+}
+
+.new-user-prompt p {
+    color: #adadb8;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.new-user-prompt .hint {
+    color: #efeff1;
+    background: #18181b;
+    padding: 8px 12px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.new-user-prompt .hint strong {
+    color: #9146ff;
+}
+
+
 /* Timer Card */
 .timer-card {
     background: linear-gradient(135deg, #9146ff 0%, #772ce8 100%);
@@ -156,7 +219,7 @@ body {
 #timer-text {
     font-size: 20px;
     font-weight: 700;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .timer-ready {
@@ -523,7 +586,7 @@ body {
     .stats-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .nav-btn {
         font-size: 11px;
         padding: 10px 6px;
