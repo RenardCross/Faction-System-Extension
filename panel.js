@@ -230,7 +230,9 @@ function renderOverviewPage() {
                 <p>You need to check in first to join the Faction System.</p>
                 <p class="hint">Type <strong>!join</strong> in chat to get started!</p>
             `;
-            userHeader.appendChild(newUserMsg);
+            if (userHeader) {
+                userHeader.appendChild(newUserMsg);
+            }
         }
         newUserMsg.style.display = 'block';
 
