@@ -337,15 +337,11 @@ function renderOverviewPage() {
     safeSetText('stat-prestige-rank', userData.stats.prestigeRank);
     safeSetText('stat-prestige-tier', userData.stats.prestigeTier);
 
-    // Set prestige image element (if exists in HTML)
+    // Note: Prestige image is shown as the panel background (set above)
+    // Hide the prestige icon element in the avatar container to avoid duplication
     const prestigeImage = document.getElementById('prestige-image');
     if (prestigeImage) {
-        if (userData.prestigeImageBase64) {
-            prestigeImage.src = `data:image/png;base64,${userData.prestigeImageBase64}`;
-            prestigeImage.style.display = 'block';
-        } else {
-            prestigeImage.style.display = 'none';
-        }
+        prestigeImage.style.display = 'none';
     }
 
     // Set faction info
