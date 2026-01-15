@@ -8,6 +8,7 @@ let configurationReady = false;
 let initRetryCount = 0;
 const MAX_INIT_RETRIES = 5;
 let isNewUser = false; // Track if user needs to check in first
+let hasJoinedDungeon = false; // Track if user has joined the current dungeon
 
 // Initialize panel when Twitch extension loads
 window.Twitch.ext.onAuthorized((auth) => {
@@ -26,6 +27,10 @@ window.Twitch.ext.onAuthorized((auth) => {
                 console.log('Dungeon status update:', data.active);
                 if (userData) {
                     userData.isDungeonActive = data.active;
+                    // Reset join flag when dungeon ends
+                    if (!data.active) {
+                        hasJoinedDungeon = false;
+                    }
                     // Refresh actions page if active
                     if (document.getElementById('actions-page').classList.contains('active')) {
                         renderActionsPage();
@@ -463,8 +468,8 @@ function renderActionsPage() {
 
     checkinBtn.disabled = !canCheckIn;
 
-    // Enable dungeon button if dungeon is active
-    dungeonBtn.disabled = !userData.isDungeonActive;
+    // Enable dungeon button only if dungeon is active AND user hasn't already joined
+    dungeonBtn.disabled = !userData.isDungeonActive || hasJoinedDungeon;
 
     // Update button text/style based on active state
     if (!userData.isDungeonActive) {
@@ -592,13 +597,21 @@ async function joinDungeon() {
         if (data.success) {
             statusDiv.textContent = data.message || 'Joined dungeon successfully!';
             statusDiv.className = 'action-status success';
+            hasJoinedDungeon = true; // Mark as joined so button stays disabled
 
             // Add message to feed
             addMessage('Joined dungeon!', 'chat');
         } else {
-            statusDiv.textContent = data.error || 'Could not join dungeon';
-            statusDiv.className = 'action-status error';
-            btn.disabled = false;
+            // Check if already joined (don't re-enable button)
+            if (data.alreadyJoined) {
+                statusDiv.textContent = 'Already in dungeon!';
+                statusDiv.className = 'action-status success';
+                hasJoinedDungeon = true;
+            } else {
+                statusDiv.textContent = data.error || data.message || 'Could not join dungeon';
+                statusDiv.className = 'action-status error';
+                btn.disabled = false;
+            }
         }
 
     } catch (error) {
