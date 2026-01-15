@@ -56,7 +56,7 @@ async function initializePanel() {
     try {
         // Show loading
         document.getElementById('loading').style.display = 'flex';
-        document.getElementById('error').style.display = 'none';
+        document.getElementById('offline-view').style.display = 'none';
         document.getElementById('content').style.display = 'none';
 
         // Get broadcaster config (if available)
@@ -791,7 +791,7 @@ async function autoRefresh() {
 // Show error state
 function showError() {
     document.getElementById('loading').style.display = 'none';
-    document.getElementById('error').style.display = 'block';
+    document.getElementById('offline-view').style.display = 'block';
     document.getElementById('content').style.display = 'none';
 }
 
