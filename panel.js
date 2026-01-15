@@ -317,6 +317,17 @@ function renderOverviewPage() {
     if (statsSection) statsSection.style.opacity = '1';
     if (factionSection) factionSection.style.opacity = '1';
 
+    // Set prestige image as background if available
+    const contentContainer = document.getElementById('content');
+    if (contentContainer && userData.prestigeImageBase64 && userData.prestigeImageBase64.length > 0) {
+        // Format as data URI for CSS background-image
+        const imageDataUri = `data:image/png;base64,${userData.prestigeImageBase64}`;
+        contentContainer.style.backgroundImage = `url('${imageDataUri}')`;
+    } else if (contentContainer) {
+        // Clear background if no prestige image
+        contentContainer.style.backgroundImage = 'none';
+    }
+
     // Set stats safely
     safeSetText('stat-level', userData.stats.level);
     safeSetText('stat-exp', userData.stats.experience.toLocaleString());
@@ -326,7 +337,7 @@ function renderOverviewPage() {
     safeSetText('stat-prestige-rank', userData.stats.prestigeRank);
     safeSetText('stat-prestige-tier', userData.stats.prestigeTier);
 
-    // Set prestige image
+    // Set prestige image element (if exists in HTML)
     const prestigeImage = document.getElementById('prestige-image');
     if (prestigeImage) {
         if (userData.prestigeImageBase64) {
